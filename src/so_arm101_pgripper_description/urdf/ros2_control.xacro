@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="so101_controlled_joint" params="name id command_hardware">
+    <joint name="${name}">
+      <param name="id">${id}</param>
+      <xacro:if value="${command_hardware}"><command_interface name="position"/></xacro:if>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="current"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="so101_ros2_control" params="prefix:='' plugin:='mock_components/GenericSystem' usb_port:='/dev/null' joint_config_file:='/dev/null' command_hardware:='true'">
+    <ros2_control name="${prefix}so_arm101_pgripper" type="system">
+      <hardware>
+        <plugin>${plugin}</plugin>
+        <param name="usb_port">${usb_port}</param>
+        <param name="joint_config_file">${joint_config_file}</param>
+      </hardware>
+      <xacro:so101_controlled_joint name="${prefix}shoulder_pan" id="1" command_hardware="${command_hardware}"/>
+      <xacro:so101_controlled_joint name="${prefix}shoulder_lift" id="2" command_hardware="${command_hardware}"/>
+      <xacro:so101_controlled_joint name="${prefix}elbow_flex" id="3" command_hardware="${command_hardware}"/>
+      <xacro:so101_controlled_joint name="${prefix}wrist_flex" id="4" command_hardware="${command_hardware}"/>
+      <xacro:so101_controlled_joint name="${prefix}wrist_roll" id="5" command_hardware="${command_hardware}"/>
+      <xacro:so101_controlled_joint name="${prefix}gripper" id="6" command_hardware="${command_hardware}"/>
+    </ros2_control>
+  </xacro:macro>
+</robot>

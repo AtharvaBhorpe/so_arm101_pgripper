@@ -1,0 +1,19 @@
+joint_limits:
+  shoulder_pan:
+    lower: -1.91900996564
+    upper: 1.91900996564
+  shoulder_lift:
+    lower: -1.74413615583
+    upper: 1.74413615583
+  elbow_flex:
+    lower: -1.60147594255
+    upper: 1.60147594255
+  wrist_flex:
+    lower: -1.65669925092
+    upper: 1.65669925092
+  wrist_roll:
+    lower: -2.74275764874
+    upper: 0.978679742671
+  gripper:
+    lower: -0.0122718463031
+    upper: 2.21506825771

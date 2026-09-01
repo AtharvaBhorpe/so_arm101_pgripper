@@ -1,0 +1,25 @@
+joints:
+  shoulder_pan:
+    id: 1
+    center_tick: 2048
+    direction: 1
+  shoulder_lift:
+    id: 2
+    center_tick: 2048
+    direction: 1
+  elbow_flex:
+    id: 3
+    center_tick: 2048
+    direction: 1
+  wrist_flex:
+    id: 4
+    center_tick: 2048
+    direction: 1
+  wrist_roll:
+    id: 5
+    center_tick: 2048
+    direction: 1
+  gripper:
+    id: 6
+    center_tick: 3484
+    direction: -1

@@ -1,0 +1,80 @@
+[workspace]
+name = "so_arm101_pgripper"
+version = "0.1.0"
+description = "ROS 2 Jazzy workspace for the SO-ARM101 follower with NormaCore pgripper"
+channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+colcon-common-extensions = "*"
+ros-jazzy-ros-workspace = "*"
+ros-jazzy-ros2launch = "*"
+ros-jazzy-ament-cmake = "*"
+ros-jazzy-ament-cmake-pytest = "*"
+ros-jazzy-ament-cmake-gtest = "*"
+ros-jazzy-controller-manager = "*"
+ros-jazzy-hardware-interface = "*"
+ros-jazzy-joint-state-broadcaster = "*"
+ros-jazzy-joint-trajectory-controller = "*"
+ros-jazzy-joint-state-publisher-gui = "*"
+ros-jazzy-launch = "*"
+ros-jazzy-launch-ros = "*"
+ros-jazzy-moveit = "*"
+ros-jazzy-moveit-servo = "2.12.4.*"
+ros-jazzy-moveit-resources-panda-moveit-config = "*"
+ros-jazzy-moveit-configs-utils = "*"
+ros-jazzy-moveit-planners-ompl = "*"
+ros-jazzy-joy = "*"
+ros-jazzy-robot-state-publisher = "*"
+ros-jazzy-rclcpp = "*"
+ros-jazzy-rclcpp-lifecycle = "*"
+ros-jazzy-pluginlib = "*"
+ros-jazzy-rviz2 = "*"
+ros-jazzy-ros-testing = "*"
+ros-jazzy-urdf = "*"
+ros-jazzy-xacro = "*"
+urdfdom = "*"
+cmake = "*"
+cpp-expected = ">=1.1.0,<2"
+cxx-compiler = "*"
+fmt = "*"
+libserial = "*"
+ninja = "*"
+numpy = ">=2.0,<2.3"
+packaging = ">=24.2,<26"
+pkg-config = "*"
+pytest = ">=8,<9"
+range-v3 = ">=0.12,<0.13"
+spdlog = "*"
+yaml-cpp = "*"
+
+[pypi-dependencies]
+lerobot = { version = "==0.6.1", extras = ["feetech"] }
+scipy = ">=1.11,<2"
+
+[activation.env]
+ROS_DISTRO = "jazzy"
+CMAKE_PREFIX_PATH = "${CONDA_PREFIX}"
+LIBRARY_PATH = "${CONDA_PREFIX}/lib:${LIBRARY_PATH}"
+LD_LIBRARY_PATH = "${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}"
+PYTHONNOUSERSITE = "1"
+UV_HTTP_TIMEOUT = "600"
+
+[tasks]
+build = "colcon build --symlink-install"
+test = { cmd = "colcon test --event-handlers console_direct+ && colcon test-result --verbose", depends-on = ["build"] }
+check = { cmd = "bash -c 'source install/setup.bash && xacro src/so_arm101_pgripper_description/urdf/so_arm101_pgripper.urdf.xacro | check_urdf -'", depends-on = ["build"] }
+display = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_description display.launch.py'", depends-on = ["build"] }
+real-rviz = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_description real.launch.py port:=/dev/ttyACM0 joint_config_file:=$PWD/config/hardware/so_arm101_pgripper_follower.state.yaml joint_limits_file:=$PWD/config/hardware/so_arm101_pgripper_follower.joint_limits.yaml read_only:=true'", depends-on = ["build"] }
+moveit-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config demo.launch.py'", depends-on = ["build"] }
+moveit-real = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config real.launch.py port:=/dev/ttyACM0 joint_config_file:=$PWD/config/hardware/so_arm101_pgripper_follower.control.yaml joint_limits_file:=$PWD/config/hardware/so_arm101_pgripper_follower.joint_limits.yaml confirm_hardware:=MOVE_REAL_ARM'", depends-on = ["build"] }
+moveit-servo-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py'", depends-on = ["build"] }
+moveit-servo-real = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_real.launch.py port:=/dev/ttyACM0 joint_config_file:=$PWD/config/hardware/so_arm101_pgripper_follower.control.yaml joint_limits_file:=$PWD/config/hardware/so_arm101_pgripper_follower.joint_limits.yaml confirm_hardware:=MOVE_REAL_ARM'", depends-on = ["build"] }
+moveit-servo-keyboard = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py input_device:=keyboard'", depends-on = ["build"] }
+servo-keyboard-input = { cmd = "bash -c 'source install/setup.bash && ros2 run so_arm101_pgripper_moveit_config servo_keyboard_input'", depends-on = ["build"] }
+servo-keyboard-real-input = { cmd = "bash -c 'source install/setup.bash && ros2 run so_arm101_pgripper_moveit_config servo_keyboard_input'", depends-on = ["build"] }
+moveit-servo-ps4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py input_device:=ps4'", depends-on = ["build"] }
+servo-ps4-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
+servo-ps4-real-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
+calibrate = "python src/so_arm101_pgripper_description/scripts/calibrate_so_arm101_pgripper.py"

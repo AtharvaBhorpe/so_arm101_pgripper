@@ -1,0 +1,7 @@
+servo_joy_input:
+  ros__parameters:
+    command_frame: base_link
+    deadman_button: 4
+    joint_mode_button: 5
+    frame_button: 3
+    deadzone: 0.10

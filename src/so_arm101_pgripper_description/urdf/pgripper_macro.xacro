@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="pgripper_meshes" value="package://so_arm101_pgripper_description/meshes/pgripper"/>
+
+  <xacro:macro name="pgripper_mesh_pair" params="filename xyz">
+    <visual>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <geometry><mesh filename="${pgripper_meshes}/${filename}" scale="0.001 0.001 0.001"/></geometry>
+      <material name="pgripper"/>
+    </visual>
+    <collision>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <geometry><mesh filename="${pgripper_meshes}/${filename}" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </xacro:macro>
+
+  <!-- Geometry, internal frames, axes, limits, and mimic ratios are retained
+       from norma-core hardware/elrobot/simulation/elrobot_follower.urdf. -->
+  <xacro:macro name="pgripper" params="prefix:='' parent limits mount_xyz:='0 0 0' mount_rpy:='-1.57079632679 0 -1.57079632679'">
+    <link name="${prefix}pgripper_base_link">
+      <inertial>
+        <origin xyz="0.0005605249651253262 0.03191999437655846 -0.0005946931738743111" rpy="0 0 0"/>
+        <mass value="0.046895455343164964"/>
+        <inertia ixx="2.2e-05" ixy="0" ixz="0" iyy="2.9e-05" iyz="0" izz="3.1e-05"/>
+      </inertial>
+      <xacro:pgripper_mesh_pair filename="Gripper_Base_v1_1.stl" xyz="-0.002925 -0.259566 -0.218892"/>
+    </link>
+    <joint name="${prefix}pgripper_mount_joint" type="fixed">
+      <origin xyz="${mount_xyz}" rpy="${mount_rpy}"/>
+      <parent link="${parent}"/><child link="${prefix}pgripper_base_link"/>
+    </joint>
+
+    <link name="${prefix}pgripper_servo_link">
+      <inertial>
+        <origin xyz="-0.000545923413501848 -0.018926109262623947 -0.01220636642566475" rpy="0 0 0"/>
+        <mass value="0.03190666159632515"/>
+        <inertia ixx="8e-06" ixy="0" ixz="0" iyy="7e-06" iyz="0" izz="4e-06"/>
+      </inertial>
+      <xacro:pgripper_mesh_pair filename="ST3215_8_v1_1.stl" xyz="-0.003701 -0.304808 -0.218483"/>
+    </link>
+    <joint name="${prefix}pgripper_servo_mount_joint" type="fixed">
+      <origin xyz="0.000776 0.045242 -0.000409" rpy="0 0 0"/>
+      <parent link="${prefix}pgripper_base_link"/><child link="${prefix}pgripper_servo_link"/>
+    </joint>
+
+    <link name="${prefix}pgripper_gear_link">
+      <inertial>
+        <origin xyz="6.406692942733175e-05 0.0037564011470480607 -3.383421367433859e-05" rpy="0 0 0"/>
+        <mass value="0.0024790841259162795"/>
+        <inertia ixx="1e-08" ixy="0" ixz="0" iyy="1e-08" iyz="0" izz="1e-08"/>
+      </inertial>
+      <xacro:pgripper_mesh_pair filename="Gripper_Gear_v1_1.stl" xyz="-0.003701 -0.304808 -0.218483"/>
+    </link>
+    <joint name="${prefix}gripper" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}pgripper_servo_link"/><child link="${prefix}pgripper_gear_link"/>
+      <axis xyz="0.017144 0.999812 -0.009029"/>
+      <limit lower="${limits['gripper']['lower']}" upper="${limits['gripper']['upper']}" effort="2.94" velocity="4.71"/>
+    </joint>
+
+    <link name="${prefix}pgripper_left_jaw_link">
+      <inertial>
+        <origin xyz="-0.3386809002581644 0.2625921677727179 -0.030316532660763146" rpy="0 0 0"/>
+        <mass value="0.012492175356778453"/>
+        <inertia ixx="5e-06" ixy="0" ixz="0" iyy="4e-06" iyz="0" izz="3e-06"/>
+      </inertial>
+      <xacro:pgripper_mesh_pair filename="Gripper_Jaw_02_v1_1.stl" xyz="-0.314659 -0.059918 -0.251741"/>
+    </link>
+    <joint name="${prefix}pgripper_left_finger_joint" type="prismatic">
+      <origin xyz="0.311734 -0.199648 0.032849" rpy="0 0 0"/>
+      <parent link="${prefix}pgripper_base_link"/><child link="${prefix}pgripper_left_jaw_link"/>
+      <axis xyz="-0.999697 0.0173 0.017525"/>
+      <limit lower="-0.0255" upper="0" effort="2.94" velocity="4.71"/>
+      <mimic joint="${prefix}gripper" multiplier="-0.0115" offset="0"/>
+    </joint>
+
+    <link name="${prefix}pgripper_right_jaw_link">
+      <inertial>
+        <origin xyz="-0.27944183977334625 0.30531580207092573 0.046279678752686765" rpy="0 0 0"/>
+        <mass value="0.012492175356778453"/>
+        <inertia ixx="5e-06" ixy="0" ixz="0" iyy="4e-06" iyz="0" izz="3e-06"/>
+      </inertial>
+      <xacro:pgripper_mesh_pair filename="Gripper_Jaw_01_v1_1.stl" xyz="-0.311498 -0.016199 -0.171401"/>
+    </link>
+    <joint name="${prefix}pgripper_right_finger_joint" type="prismatic">
+      <origin xyz="0.308573 -0.243367 -0.049391" rpy="0 0 0"/>
+      <parent link="${prefix}pgripper_base_link"/><child link="${prefix}pgripper_right_jaw_link"/>
+      <axis xyz="-0.999697 0.0173 0.017525"/>
+      <limit lower="0" upper="0.0255" effort="2.94" velocity="4.71"/>
+      <mimic joint="${prefix}gripper" multiplier="0.0115" offset="0"/>
+    </joint>
+
+    <!-- Midpoint between the open jaw tips; orientation matches the canonical
+         SO-101 gripper_frame_link convention after the mount conversion. -->
+    <link name="${prefix}gripper_frame_link"/>
+    <joint name="${prefix}gripper_frame_joint" type="fixed">
+      <origin xyz="0 0.104 0" rpy="1.57079632679 0 -3.14159265359"/>
+      <parent link="${prefix}pgripper_base_link"/><child link="${prefix}gripper_frame_link"/>
+    </joint>
+    <link name="${prefix}tool0"/>
+    <joint name="${prefix}tool0_joint" type="fixed">
+      <parent link="${prefix}gripper_frame_link"/><child link="${prefix}tool0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+</robot>

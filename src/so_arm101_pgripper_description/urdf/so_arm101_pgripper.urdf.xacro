@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="so_arm101_pgripper">
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="use_ros2_control" default="false"/>
+  <xacro:arg name="ros2_control_plugin" default="mock_components/GenericSystem"/>
+  <xacro:arg name="usb_port" default="/dev/null"/>
+  <xacro:arg name="joint_config_file" default="/dev/null"/>
+  <xacro:arg name="joint_limits_file" default="$(find so_arm101_pgripper_description)/config/canonical_joint_limits.yaml"/>
+  <xacro:arg name="command_hardware" default="true"/>
+  <xacro:arg name="pgripper_mount_xyz" default="0 0 0"/>
+  <xacro:arg name="pgripper_mount_rpy" default="-1.57079632679 0 -1.57079632679"/>
+
+  <xacro:include filename="$(find so_arm101_pgripper_description)/urdf/so101_arm_macro.xacro"/>
+  <xacro:include filename="$(find so_arm101_pgripper_description)/urdf/pgripper_macro.xacro"/>
+  <xacro:include filename="$(find so_arm101_pgripper_description)/urdf/ros2_control.xacro"/>
+  <xacro:property name="joint_limits" value="${xacro.load_yaml('$(arg joint_limits_file)')['joint_limits']}"/>
+
+  <material name="printed">
+    <color rgba="1.0 0.82 0.12 1.0"/>
+  </material>
+  <material name="servo">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="pgripper">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+  <xacro:so101_arm prefix="$(arg prefix)" limits="${joint_limits}"/>
+  <xacro:pgripper
+    prefix="$(arg prefix)"
+    parent="$(arg prefix)gripper_link"
+    limits="${joint_limits}"
+    mount_xyz="$(arg pgripper_mount_xyz)"
+    mount_rpy="$(arg pgripper_mount_rpy)"/>
+
+  <xacro:if value="$(arg use_ros2_control)">
+    <xacro:so101_ros2_control
+      prefix="$(arg prefix)"
+      plugin="$(arg ros2_control_plugin)"
+      usb_port="$(arg usb_port)"
+      joint_config_file="$(arg joint_config_file)"
+      command_hardware="$(arg command_hardware)"/>
+  </xacro:if>
+</robot>

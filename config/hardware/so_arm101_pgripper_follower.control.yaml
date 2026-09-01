@@ -1,0 +1,72 @@
+joints:
+  shoulder_pan:
+    id: 1
+    center_tick: 2048
+    direction: 1
+    homing_offset: 242
+    range_min: 797
+    range_max: 3299
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+  shoulder_lift:
+    id: 2
+    center_tick: 2048
+    direction: 1
+    homing_offset: -573
+    range_min: 911
+    range_max: 3185
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+  elbow_flex:
+    id: 3
+    center_tick: 2048
+    direction: 1
+    homing_offset: -537
+    range_min: 1004
+    range_max: 3092
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+  wrist_flex:
+    id: 4
+    center_tick: 2048
+    direction: 1
+    homing_offset: 238
+    range_min: 968
+    range_max: 3128
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+  wrist_roll:
+    id: 5
+    center_tick: 2048
+    direction: 1
+    homing_offset: -552
+    range_min: 260
+    range_max: 2686
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+  gripper:
+    id: 6
+    center_tick: 3484
+    direction: -1
+    homing_offset: -779
+    range_min: 2048
+    range_max: 3484
+    p_coefficient: 16
+    i_coefficient: 0
+    d_coefficient: 32
+    max_torque_limit: 500
+    protection_current: 250
+    overload_torque: 25
+    # Contact stop is disabled until its threshold is measured with a scale.
+    contact_stop_enabled: false
+    contact_current_threshold: 150
+    contact_stop_cycles: 5
+    contact_position_epsilon: 0.001
+    contact_release_epsilon: 0.002
+    contact_current_filter_alpha: 0.25
+    contact_torque_limit: 150

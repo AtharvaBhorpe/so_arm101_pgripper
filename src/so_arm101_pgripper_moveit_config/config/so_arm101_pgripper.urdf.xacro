@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="so_arm101_pgripper">
+  <xacro:arg name="use_ros2_control" default="true"/>
+  <xacro:arg name="ros2_control_plugin" default="mock_components/GenericSystem"/>
+  <xacro:arg name="usb_port" default="/dev/null"/>
+  <xacro:arg name="joint_config_file" default="/dev/null"/>
+  <xacro:arg name="command_hardware" default="true"/>
+  <xacro:include filename="$(find so_arm101_pgripper_description)/urdf/so_arm101_pgripper.urdf.xacro"/>
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+</robot>
