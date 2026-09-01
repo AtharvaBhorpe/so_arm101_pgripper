@@ -58,8 +58,7 @@ pluginlib_export_plugin_description_file(
   pick_ik_kinematics_description.xml
 )
 
-option(PICK_IK_BUILD_UPSTREAM_TESTS "Build the vendored pick_ik tests" OFF)
-if(BUILD_TESTING AND PICK_IK_BUILD_UPSTREAM_TESTS)
+if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 

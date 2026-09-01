@@ -1,0 +1,7 @@
+{
+  "names": {
+    "pick_ik": {
+      "cmake-args": ["-DBUILD_TESTING=OFF"]
+    }
+  }
+}
