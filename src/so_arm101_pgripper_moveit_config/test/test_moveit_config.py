@@ -165,7 +165,7 @@ def test_real_launch_is_guarded_and_uses_the_feetech_driver():
     source = launch_path.read_text()
 
     assert "MOVE_REAL_ARM" in source
-    assert "feetech_ros2_driver/FeetechHardwareInterface" in source
+    assert "so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface" in source
     assert "joint_config_file" in source
     assert "joint_limits_file" in source
     assert "arm_controller" in source

@@ -69,7 +69,7 @@ def test_real_servo_launch_is_guarded_and_uses_real_hardware():
     source = launch_path.read_text()
 
     assert "MOVE_REAL_ARM" in source
-    assert "feetech_ros2_driver/FeetechHardwareInterface" in source
+    assert "so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface" in source
     assert "real.launch.py" in source
     assert "moveit_servo::ServoNode" in source
     assert '"command_hardware": "true"' in source

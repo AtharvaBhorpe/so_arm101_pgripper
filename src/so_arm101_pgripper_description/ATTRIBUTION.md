@@ -27,4 +27,4 @@ The package's original glue code and documentation are offered under Apache-2.0.
 - Source revision: `18aed7fb26d3e2b4c0b47762f39d8698b7032422`
 - Imported material: the complete ROS 2 hardware plugin and Feetech serial protocol package under `src/feetech_ros2_driver`.
 - License: BSD; retained verbatim in `src/feetech_ros2_driver/LICENSE`.
-- Changes: added tested per-joint `center_tick` and `direction` parameters. The pgripper uses 0 rad open and positive radians closed.
+- Changes: none in the vendored source. The workspace-local `so_arm101_pgripper_hardware` plugin applies per-joint `center_tick` and `direction`; the pgripper uses 0 rad open and positive radians closed.

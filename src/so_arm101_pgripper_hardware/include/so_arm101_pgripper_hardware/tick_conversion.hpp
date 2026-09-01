@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-namespace feetech_ros2_driver {
+namespace so_arm101_pgripper_hardware {
 
 inline double ticks_to_radians(const int ticks, const int direction, const int center_tick = 2048) {
   if (direction != -1 && direction != 1) {
@@ -20,4 +20,4 @@ inline int radians_to_ticks(const double radians, const int direction, const int
   return center_tick + direction * feetech_driver::from_radians(radians);
 }
 
-}  // namespace feetech_ros2_driver
+}  // namespace so_arm101_pgripper_hardware

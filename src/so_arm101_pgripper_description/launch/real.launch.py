@@ -35,7 +35,7 @@ def _launch_setup(context):
                 FindExecutable(name="xacro"),
                 " ", str(share / "urdf" / "so_arm101_pgripper.urdf.xacro"),
                 " use_ros2_control:=true",
-                " ros2_control_plugin:=feetech_ros2_driver/FeetechHardwareInterface",
+                " ros2_control_plugin:=so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface",
                 f" usb_port:={port}",
                 f" joint_config_file:={joint_config}",
                 f" joint_limits_file:={limits}",

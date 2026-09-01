@@ -121,7 +121,7 @@ def test_real_state_only_control_has_ids_mapping_and_no_commands(tmp_path):
             "xacro",
             str(XACRO),
             "use_ros2_control:=true",
-            "ros2_control_plugin:=feetech_ros2_driver/FeetechHardwareInterface",
+            "ros2_control_plugin:=so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface",
             "usb_port:=/dev/test-arm",
             "joint_config_file:=/tmp/state.yaml",
             f"joint_limits_file:={limits}",

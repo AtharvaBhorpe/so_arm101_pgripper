@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>so_arm101_pgripper_hardware</name>
+  <version>0.1.0</version>
+  <description>SO-ARM101 coordinate mapping for the Feetech ros2_control driver.</description>
+  <maintainer email="ub26@example.com">ub26</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>feetech_ros2_driver</depend>
+  <depend>fmt</depend>
+  <depend>hardware_interface</depend>
+  <depend>libexpected-dev</depend>
+  <depend>pluginlib</depend>
+  <depend>range-v3</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>spdlog</depend>
+  <depend>yaml-cpp</depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

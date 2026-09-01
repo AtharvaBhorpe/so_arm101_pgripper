@@ -33,7 +33,7 @@ def _launch_setup(context):
         .robot_description(
             file_path="config/so_arm101_pgripper.urdf.xacro",
             mappings={
-                "ros2_control_plugin": "feetech_ros2_driver/FeetechHardwareInterface",
+                "ros2_control_plugin": "so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface",
                 "usb_port": port,
                 "joint_config_file": joint_config,
                 "joint_limits_file": limits,

@@ -4,7 +4,6 @@
 #include <feetech_driver/common.hpp>
 #include <feetech_driver/communication_protocol.hpp>
 #include <feetech_ros2_driver/feetech_ros2_driver.hpp>
-#include <feetech_ros2_driver/tick_conversion.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <range/v3/range/conversion.hpp>
@@ -109,9 +108,6 @@ CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointIdConfi
 
 CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMap& yaml_by_id) {
   joint_ids_.assign(info_.joints.size(), 0);
-  joint_center_ticks_.assign(info_.joints.size(), feetech_driver::kStsMidpoint);
-  joint_directions_.assign(info_.joints.size(), 1);
-  state_hw_currents_.assign(info_.joints.size(), 0.0);
 
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto& joint = info_.joints[i];
@@ -136,23 +132,6 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
 
     if (merged_params.find("offset") != merged_params.end()) {
       spdlog::warn("Joint '{}': 'offset' param is deprecated and ignored — use 'homing_offset' instead", joint_name);
-    }
-
-    try {
-      if (const auto it = merged_params.find("center_tick"); it != merged_params.end()) {
-        joint_center_ticks_[i] = std::stoi(it->second);
-      }
-      if (const auto it = merged_params.find("direction"); it != merged_params.end()) {
-        joint_directions_[i] = std::stoi(it->second);
-      }
-    } catch (const std::exception& error) {
-      spdlog::error("Joint '{}': invalid center_tick or direction: {}", joint_name, error.what());
-      return CallbackReturn::ERROR;
-    }
-    if (joint_center_ticks_[i] < 0 || joint_center_ticks_[i] > 4095 ||
-        (joint_directions_[i] != -1 && joint_directions_[i] != 1)) {
-      spdlog::error("Joint '{}': center_tick must be 0..4095 and direction must be -1 or 1", joint_name);
-      return CallbackReturn::ERROR;
     }
 
     // Disable torque and unlock EPROM before writing parameters
@@ -255,11 +234,9 @@ std::vector<hardware_interface::StateInterface> FeetechHardwareInterface::export
   std::vector<hardware_interface::StateInterface> state_interfaces;
   state_hw_positions_.resize(info_.joints.size(), 0.0);
   state_hw_velocities_.resize(info_.joints.size(), 0.0);
-  state_hw_currents_.resize(info_.joints.size(), 0.0);
   for (uint i = 0; i < info_.joints.size(); i++) {
     state_interfaces.emplace_back(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &state_hw_positions_[i]);
     state_interfaces.emplace_back(info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &state_hw_velocities_[i]);
-    state_interfaces.emplace_back(info_.joints[i].name, "current", &state_hw_currents_[i]);
   }
 
   return state_interfaces;
@@ -279,8 +256,8 @@ std::vector<hardware_interface::CommandInterface> FeetechHardwareInterface::expo
 
 hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Time& /* time */,
                                                                const rclcpp::Duration& /* period */) {
-  // 15 bytes span position through current in the STS status table.
-  std::vector<std::array<uint8_t, 15>> data;
+  // 4 = 2 bytes for position + 2 bytes for speed
+  std::vector<std::array<uint8_t, 4>> data;
   data.reserve(joint_ids_.size());
   if (auto result = communication_protocol_->sync_read(joint_ids_, SMS_STS_PRESENT_POSITION_L, &data); !result) {
     spdlog::error("FeetechHardwareInterface::read -> {}", result.error());
@@ -288,14 +265,11 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
   }
   ranges::for_each(data | ranges::views::enumerate, [&](const auto& values) {
     const auto& [index, readings] = values;
-    state_hw_positions_[index] = ticks_to_radians(
-        feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[0], .high = readings[1]}),
-        joint_directions_[index], joint_center_ticks_[index]);
-    state_hw_velocities_[index] = joint_directions_[index] * feetech_driver::to_radians(
-                                                            feetech_driver::from_sts(feetech_driver::WordBytes{
-                                                                .low = readings[2], .high = readings[3]}));
-    state_hw_currents_[index] = feetech_driver::from_sts(
-        feetech_driver::WordBytes{.low = readings[13], .high = readings[14]});
+    state_hw_positions_[index] = feetech_driver::to_radians(
+        feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[0], .high = readings[1]}) -
+        feetech_driver::kStsMidpoint);
+    state_hw_velocities_[index] = feetech_driver::to_radians(
+        feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[2], .high = readings[3]}));
   });
   return hardware_interface::return_type::OK;
 }
@@ -312,7 +286,7 @@ hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Ti
     // Only include joints with command interfaces
     if (!info_.joints[i].command_interfaces.empty()) {
       commanded_joint_ids.push_back(joint_ids_[i]);
-      commanded_positions.push_back(radians_to_ticks(hw_positions_[i], joint_directions_[i], joint_center_ticks_[i]));
+      commanded_positions.push_back(feetech_driver::from_radians(hw_positions_[i]) + feetech_driver::kStsMidpoint);
       commanded_speeds.push_back(2400);       // Default speed
       commanded_accelerations.push_back(50);  // Default acceleration
     }

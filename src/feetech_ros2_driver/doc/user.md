@@ -27,8 +27,6 @@ Make sure to look at [Memory table](https://docs.google.com/spreadsheets/d/1GVs7
 * `overload_torque` (optional): Overload torque threshold.
 * `return_delay_time` (optional): Response delay time.
 * `acceleration` (optional): Acceleration value.
-* `center_tick` (optional, downstream extension): Tick interpreted as 0 radians. Defaults to 2048.
-* `direction` (optional, downstream extension): `1` for increasing ticks = positive radians, `-1` for decreasing ticks = positive radians. Defaults to `1`.
 
 ### Example
 

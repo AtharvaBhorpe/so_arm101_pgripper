@@ -55,13 +55,6 @@ target_link_libraries(
 pluginlib_export_plugin_description_file(
   hardware_interface feetech_ros2_control_plugin_description.xml)
 
-if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(tick_conversion_test test/tick_conversion_test.cpp)
-  target_include_directories(tick_conversion_test PRIVATE include feetech_driver/include)
-  target_link_libraries(tick_conversion_test fmt::fmt)
-endif()
-
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}Targets

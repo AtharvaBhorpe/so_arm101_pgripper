@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<library path="so_arm101_pgripper_hardware">
+  <class
+    name="so_arm101_pgripper_hardware/SoArm101PgripperHardwareInterface"
+    type="so_arm101_pgripper_hardware::SoArm101PgripperHardwareInterface"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>SO-ARM101 coordinate mapping over the Feetech STS transport.</description>
+  </class>
+</library>

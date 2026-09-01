@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <feetech_ros2_driver/tick_conversion.hpp>
+#include <so_arm101_pgripper_hardware/tick_conversion.hpp>
 
-namespace feetech_ros2_driver {
+namespace so_arm101_pgripper_hardware {
 
 TEST(TickConversion, CenterIsZeroInBothDirections) {
   EXPECT_DOUBLE_EQ(ticks_to_radians(2048, 1), 0.0);
@@ -18,4 +18,4 @@ TEST(TickConversion, RejectsInvalidDirection) {
   EXPECT_THROW(ticks_to_radians(2048, 0), std::invalid_argument);
 }
 
-}  // namespace feetech_ros2_driver
+}  // namespace so_arm101_pgripper_hardware
