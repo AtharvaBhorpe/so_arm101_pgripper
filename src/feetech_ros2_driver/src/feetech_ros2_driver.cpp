@@ -1,7 +1,6 @@
 #include <fmt/ranges.h>
 
 #include <algorithm>
-#include <cmath>
 #include <feetech_driver/common.hpp>
 #include <feetech_driver/communication_protocol.hpp>
 #include <feetech_ros2_driver/feetech_ros2_driver.hpp>
@@ -109,8 +108,6 @@ CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointIdConfi
 }
 
 CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMap& yaml_by_id) {
-  gripper_contact_stop_enabled_ = false;
-  gripper_contact_torque_limit_ = 0;
   joint_ids_.assign(info_.joints.size(), 0);
   joint_center_ticks_.assign(info_.joints.size(), feetech_driver::kStsMidpoint);
   joint_directions_.assign(info_.joints.size(), 1);
@@ -119,9 +116,6 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto& joint = info_.joints[i];
     const std::string& joint_name = joint.name;
-    if (joint_name == "gripper") {
-      gripper_index_ = i;
-    }
 
     // Required: id (from URDF — hardware identity)
     const auto urdf_id_it = joint.parameters.find("id");
@@ -161,41 +155,6 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
       return CallbackReturn::ERROR;
     }
 
-    if (joint_name == "gripper") {
-      GripperContactStopConfig contact_config;
-      if (const auto it = merged_params.find("contact_stop_enabled"); it != merged_params.end()) {
-        contact_config.enabled = it->second == "true" || it->second == "1";
-      }
-      if (const auto it = merged_params.find("contact_current_threshold"); it != merged_params.end()) {
-        contact_config.current_threshold = std::stoi(it->second);
-      }
-      if (const auto it = merged_params.find("contact_stop_cycles"); it != merged_params.end()) {
-        contact_config.stop_cycles = static_cast<std::size_t>(std::stoul(it->second));
-      }
-      if (const auto it = merged_params.find("contact_position_epsilon"); it != merged_params.end()) {
-        contact_config.position_epsilon = std::stod(it->second);
-      }
-      if (const auto it = merged_params.find("contact_release_epsilon"); it != merged_params.end()) {
-        contact_config.release_epsilon = std::stod(it->second);
-      }
-      if (const auto it = merged_params.find("contact_current_filter_alpha"); it != merged_params.end()) {
-        gripper_current_filter_alpha_ = std::stod(it->second);
-      }
-      if (const auto it = merged_params.find("contact_torque_limit"); it != merged_params.end()) {
-        gripper_contact_torque_limit_ = std::stoi(it->second);
-      }
-      if (contact_config.enabled &&
-          (contact_config.current_threshold <= 0 || contact_config.stop_cycles == 0 ||
-           contact_config.position_epsilon <= 0.0 || contact_config.release_epsilon <= 0.0 ||
-           gripper_current_filter_alpha_ <= 0.0 || gripper_current_filter_alpha_ > 1.0 ||
-           gripper_contact_torque_limit_ <= 0 || gripper_contact_torque_limit_ > 1000)) {
-        spdlog::error("Gripper contact-stop configuration has an invalid value");
-        return CallbackReturn::ERROR;
-      }
-      gripper_contact_stop_enabled_ = contact_config.enabled;
-      gripper_contact_stop_ = GripperContactStop(contact_config);
-    }
-
     // Disable torque and unlock EPROM before writing parameters
     if (const auto result = communication_protocol_->disable_torque(joint_ids_[i]); !result) {
       spdlog::error("FeetechHardwareInterface::configure_joints_ disable_torque -> {}", result.error());
@@ -232,16 +191,6 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
           spdlog::error("FeetechHardwareInterface::configure_joints_ -> {}", result.error());
           return CallbackReturn::ERROR;
         }
-      }
-    }
-
-    if (joint_name == "gripper" && gripper_contact_stop_enabled_ && !gripper_contact_stop_.latched() &&
-        gripper_contact_torque_limit_ > 0) {
-      std::array<uint8_t, 2> buf{};
-      feetech_driver::to_sts(&buf[0], &buf[1], gripper_contact_torque_limit_);
-      if (const auto result = communication_protocol_->write(joint_ids_[i], SMS_STS_TORQUE_LIMIT_L, buf); !result) {
-        spdlog::error("FeetechHardwareInterface::configure_joints_ contact torque limit -> {}", result.error());
-        return CallbackReturn::ERROR;
       }
     }
 
@@ -339,7 +288,6 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
   }
   ranges::for_each(data | ranges::views::enumerate, [&](const auto& values) {
     const auto& [index, readings] = values;
-    const double previous_position = state_hw_positions_[index];
     state_hw_positions_[index] = ticks_to_radians(
         feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[0], .high = readings[1]}),
         joint_directions_[index], joint_center_ticks_[index]);
@@ -348,11 +296,6 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
                                                                 .low = readings[2], .high = readings[3]}));
     state_hw_currents_[index] = feetech_driver::from_sts(
         feetech_driver::WordBytes{.low = readings[13], .high = readings[14]});
-    if (index == gripper_index_) {
-      gripper_position_delta_ = std::abs(state_hw_positions_[index] - previous_position);
-      gripper_current_filtered_ = gripper_current_filter_alpha_ * state_hw_currents_[index] +
-                                   (1.0 - gripper_current_filter_alpha_) * gripper_current_filtered_;
-    }
   });
   return hardware_interface::return_type::OK;
 }
@@ -369,22 +312,7 @@ hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Ti
     // Only include joints with command interfaces
     if (!info_.joints[i].command_interfaces.empty()) {
       commanded_joint_ids.push_back(joint_ids_[i]);
-      double commanded_position = hw_positions_[i];
-      if (i == gripper_index_) {
-        const bool was_latched = gripper_contact_stop_.latched();
-        if (const auto held_position = gripper_contact_stop_.update(
-                state_hw_positions_[i], commanded_position, static_cast<int>(gripper_current_filtered_),
-                gripper_position_delta_);
-            held_position.has_value()) {
-          commanded_position = *held_position;
-        }
-        if (!was_latched && gripper_contact_stop_.latched()) {
-          spdlog::warn("Gripper contact stop latched at {:.4f} rad and current {:.0f}",
-                       commanded_position,
-                       gripper_current_filtered_);
-        }
-      }
-      commanded_positions.push_back(radians_to_ticks(commanded_position, joint_directions_[i], joint_center_ticks_[i]));
+      commanded_positions.push_back(radians_to_ticks(hw_positions_[i], joint_directions_[i], joint_center_ticks_[i]));
       commanded_speeds.push_back(2400);       // Default speed
       commanded_accelerations.push_back(50);  // Default acceleration
     }

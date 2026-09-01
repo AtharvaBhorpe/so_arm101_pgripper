@@ -60,9 +60,6 @@ if(BUILD_TESTING)
   ament_add_gtest(tick_conversion_test test/tick_conversion_test.cpp)
   target_include_directories(tick_conversion_test PRIVATE include feetech_driver/include)
   target_link_libraries(tick_conversion_test fmt::fmt)
-
-  ament_add_gtest(gripper_contact_stop_test test/gripper_contact_stop_test.cpp)
-  target_include_directories(gripper_contact_stop_test PRIVATE include)
 endif()
 
 install(

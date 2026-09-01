@@ -62,11 +62,3 @@ joints:
     max_torque_limit: 500
     protection_current: 250
     overload_torque: 25
-    # Contact stop is disabled until its threshold is measured with a scale.
-    contact_stop_enabled: false
-    contact_current_threshold: 150
-    contact_stop_cycles: 5
-    contact_position_epsilon: 0.001
-    contact_release_epsilon: 0.002
-    contact_current_filter_alpha: 0.25
-    contact_torque_limit: 150

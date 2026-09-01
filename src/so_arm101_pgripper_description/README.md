@@ -150,20 +150,6 @@ lerobot-teleoperate \
 
 The follower remains a normal `so101_follower`: body observations/actions are degrees, while `gripper.pos` is 0–100. For the future WH148 leader, map potentiometer midpoints to the five body-joint zero positions and map the click button to gripper 0/100; dataset recording and ACT/VLA code can then retain LeRobot's standard feature names. Add that leader driver when the potentiometer ADC, electrical range, and button behavior are known.
 
-## Optional gripper contact stop
-
-The Feetech driver exposes each servo's raw `Present_Current` value as the `current` state interface. It also includes an opt-in gripper contact stop. When enabled, the driver filters gripper current, detects repeated high-current samples while the jaw position stalls, and holds the last measured position. Opening the gripper releases the latch.
-
-The feature is disabled in `so_arm101_pgripper_follower.control.yaml`. The example threshold and torque cap are placeholders, not a safe grasp setting. Do not tune them with fingers. First use a compliant test object and observe the current stream:
-
-```bash
-pixi run real-rviz
-# In another terminal, from this workspace:
-pixi run bash -c 'source install/setup.bash && ros2 topic echo /dynamic_joint_states'
-```
-
-Record the empty-jaw baseline and the current at first contact. Set `contact_current_threshold` above the empty-jaw peak, set `contact_torque_limit` conservatively, then set `contact_stop_enabled: true` and rebuild. The stop limits force, but it is not a certified pinch-force controller. Keep the physical disconnect accessible during every test.
-
 ## Model and provenance
 
 The body geometry and frames come from TheRobotStudio's SO-ARM101 description. The pgripper geometry and mimic kinematics come from NormaCore's ElRobot URDF. The measured pgripper mount is `xyz="0 0 0"`, `rpy="-pi/2 0 -pi/2"`. Full source revisions, modifications, and licenses are in [ATTRIBUTION.md](ATTRIBUTION.md).

@@ -6,7 +6,6 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 #include <map>
-#include <feetech_ros2_driver/gripper_contact_stop.hpp>
 #include <rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp>
 #include <rclcpp_lifecycle/state.hpp>
 #include <vector>
@@ -54,13 +53,6 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   std::vector<uint8_t> joint_ids_;
   std::vector<int> joint_center_ticks_;
   std::vector<int> joint_directions_;
-  std::size_t gripper_index_{0};
-  double gripper_current_filtered_{0.0};
-  double gripper_current_filter_alpha_{0.25};
-  double gripper_position_delta_{0.0};
-  int gripper_contact_torque_limit_{0};
-  bool gripper_contact_stop_enabled_{false};
-  GripperContactStop gripper_contact_stop_{{}};
 
   CallbackReturn init_transport_();
   CallbackReturn load_yaml_config_and_warn_(JointIdConfigMap& out_yaml);
