@@ -132,13 +132,13 @@ The task uses the calibrated control YAML and joint-limit YAML for `so_arm101_pg
 Start keyboard input in another terminal:
 
 ```bash
-pixi run servo-keyboard-real-input
+pixi run servo-keyboard-input
 ```
 
 Start PS4 input in another terminal:
 
 ```bash
-pixi run servo-ps4-real-input
+pixi run servo-ps4-input
 ```
 
 Start with low scale values and small single-joint motions. Stop the launch if the arm jumps, vibrates, buzzes, or moves in the wrong direction.

@@ -73,8 +73,6 @@ moveit-servo-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch s
 moveit-servo-real = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_real.launch.py port:=/dev/ttyACM0 joint_config_file:=$PWD/config/hardware/so_arm101_pgripper_follower.control.yaml joint_limits_file:=$PWD/config/hardware/so_arm101_pgripper_follower.joint_limits.yaml confirm_hardware:=MOVE_REAL_ARM'", depends-on = ["build"] }
 moveit-servo-keyboard = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py input_device:=keyboard'", depends-on = ["build"] }
 servo-keyboard-input = { cmd = "bash -c 'source install/setup.bash && ros2 run so_arm101_pgripper_moveit_config servo_keyboard_input'", depends-on = ["build"] }
-servo-keyboard-real-input = { cmd = "bash -c 'source install/setup.bash && ros2 run so_arm101_pgripper_moveit_config servo_keyboard_input'", depends-on = ["build"] }
 moveit-servo-ps4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py input_device:=ps4'", depends-on = ["build"] }
 servo-ps4-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
-servo-ps4-real-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
 calibrate = "python src/so_arm101_pgripper_description/scripts/calibrate_so_arm101_pgripper.py"

@@ -94,7 +94,7 @@ pixi run moveit-servo-real
 When Servo reports that it is ready, start keyboard input in terminal 2:
 
 ~~~bash
-pixi run servo-keyboard-real-input
+pixi run servo-keyboard-input
 ~~~
 
 Start with small single-joint motions. Press `g` to toggle the gripper. Press
