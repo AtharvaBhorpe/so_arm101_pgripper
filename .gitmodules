@@ -1,0 +1,9 @@
+[submodule "src/pick_ik"]
+	path = src/pick_ik
+	url = https://github.com/PickNikRobotics/pick_ik.git
+[submodule "src/feetech_ros2_driver"]
+	path = src/feetech_ros2_driver
+	url = https://github.com/ros-physical-ai/feetech_ros2_driver.git
+[submodule "src/moveit_servo"]
+	path = src/moveit_servo
+	url = https://github.com/AtharvaBhorpe/moveit_servo.git
