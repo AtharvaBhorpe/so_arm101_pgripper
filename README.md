@@ -1,154 +1,166 @@
 # SO-ARM101 pgripper
 
-ROS 2 Jazzy workspace for an SO-ARM101 follower arm fitted with a NormaCore
-pgripper. It provides a calibrated robot description, read-only RViz
-mirroring, MoveIt planning with Pick IK, and MoveIt Servo teleoperation.
+Use this ROS 2 Jazzy workspace to control an SO-ARM101 follower arm with a
+NormaCore pgripper. You can use RViz, MoveIt 2, Pick IK, and MoveIt Servo.
 
 > [!WARNING]
-> This repository can command physical motors. Start with the mock tasks,
-> keep the arm supported during real-hardware work, and stop immediately for
-> unexpected motion, vibration, or buzzing.
+> CAUTION: Start with a mock task. Real tasks can enable motor torque and move
+> the arm.
 
-## What is included
+## Contents
 
-```text
-robot description ──> ros2_control hardware plugin ──> controllers
-       │                        │                         │
-       └──────────────────── RViz / MoveIt / Servo ───────┘
-```
+~~~text
+URDF and calibration ──> ros2_control hardware plugin ──> controllers
+           │                         │                        │
+           └──────────────── RViz, MoveIt, and Servo ─────────┘
+~~~
 
-- Five-joint arm (`shoulder_pan` through `wrist_roll`) plus one gripper motor.
-- Calibrated joint mapping and limits under `config/hardware/`.
-- Mock and real MoveIt 2 launches using Pick IK for pose planning.
-- Mock and real MoveIt Servo launches with keyboard or PS4 input.
-- A local hardware plugin; external dependencies are pinned Git submodules.
+- Five arm joints and one gripper motor.
+- Calibrated joint mappings and limits in `config/hardware/`.
+- Mock and real MoveIt 2 tasks with Pick IK.
+- Mock and real MoveIt Servo tasks with keyboard or PS4 input.
+- Pinned external source repositories as Git submodules.
 
-## Quick start: mock robot
+## Start the mock robot
 
-Prerequisites: Linux x86_64 and [Pixi](https://pixi.sh). Clone the workspace
-with its exact external source revisions:
+Install Pixi on Linux x86_64. Clone the workspace with its recorded
+submodules.
 
-```bash
+~~~bash
 git clone --recurse-submodules https://github.com/AtharvaBhorpe/so_arm101_pgripper.git
 cd so_arm101_pgripper
 pixi install
 pixi run build
 pixi run test
-```
+~~~
 
-Start the basic robot model:
+Start the robot model with joint sliders:
 
-```bash
+~~~bash
 pixi run display
-```
+~~~
 
-Start the mock MoveIt system. It uses simulated controllers and **does not**
-open a serial port or enable motor torque:
+Start mock MoveIt:
 
-```bash
+~~~bash
 pixi run moveit-demo
-```
+~~~
 
-In RViz, select the `arm` planning group, keep **Approx IK Solutions** enabled,
-move the end-effector marker to a small reachable pose, then use **Plan** or
-**Plan & Execute**. Select `gripper` to test its open and closed named states.
+Mock tasks use simulated controllers. They do not open a serial port or enable
+motor torque.
 
-## Real robot workflow
+In RViz, select the `arm` group. Keep **Approx IK Solutions** active. Move the
+end-effector marker to a small reachable pose. Select **Plan** or **Plan & Execute**.
 
-Do not skip directly to torque-enabled commands. The first gate validates that
-the calibrated software matches the physical robot; the second enables motion.
+Select the `gripper` group to use its open and closed named states.
 
-1. **Read-only RViz mirroring** — torque stays off:
+## Use the real robot
 
-   ```bash
-   pixi run real-rviz
-   ```
+CAUTION: Support the arm. Keep the power connector accessible. Stop the task
+after unexpected motion, vibration, or buzzing.
 
-   Move each joint by hand. RViz must follow the same direction and the
-   gripper must open at `0 rad`.
+### 1. Read-only RViz
 
-2. **MoveIt planning and execution** — torque-enabled:
+Run this task first:
 
-   ```bash
-   pixi run moveit-real
-   ```
+~~~bash
+pixi run real-rviz
+~~~
 
-   Support the arm. In RViz, use **Plan** first and begin with a small,
-   reachable motion at low velocity and acceleration scaling.
+The driver reads physical joint states. It does not enable motor torque.
 
-3. **MoveIt Servo** — continuous teleoperation:
+With the jaws open, make sure that the gripper shows `0 rad`. Move each joint
+by hand. Make sure that RViz follows the same direction.
 
-   ```bash
-   # Terminal 1
-   pixi run moveit-servo-real
+### 2. MoveIt planning and execution
 
-   # Terminal 2, once Servo is ready
-   pixi run servo-keyboard-real-input
-   ```
+If read-only RViz matches the real arm, run:
 
-   Start with small single-joint motions. The `g` key toggles the gripper;
-   Space sends a stop command; `x` exits. See the MoveIt package README for
-   the complete keyboard and PS4 mappings.
+~~~bash
+pixi run moveit-real
+~~~
 
-Every real task uses `/dev/ttyACM0` by default. Confirm that it is the robot
-before launch; change the port in [`pixi.toml`](pixi.toml) if Linux assigned a
-different device path.
+This task enables motor torque. In RViz, use **Plan** before execution. Start
+with a small reachable motion and low velocity and acceleration values.
 
-## Calibration
+### 3. MoveIt Servo
 
-Calibration rewrites motor EEPROM and requires the arm to be supported. Use:
+Start the real Servo task in terminal 1:
 
-```bash
+~~~bash
+pixi run moveit-servo-real
+~~~
+
+When Servo reports that it is ready, start keyboard input in terminal 2:
+
+~~~bash
+pixi run servo-keyboard-real-input
+~~~
+
+Start with small single-joint motions. Press `g` to toggle the gripper. Press
+Space to send a zero command. Press `x` to exit.
+
+The real tasks use `/dev/ttyACM0` by default. Make sure that this path belongs
+to the robot. If Linux assigns another path, change the task in
+[`pixi.toml`](pixi.toml).
+
+## Calibrate the robot
+
+CAUTION: Support the arm during calibration. Calibration disables motor torque
+and writes EEPROM only after an explicit confirmation.
+
+Run the full calibration:
+
+~~~bash
 pixi run calibrate --port /dev/ttyACM0 \
   --robot-id so_arm101_pgripper_follower \
   --calibration-dir config/hardware
-```
+~~~
 
-Wrist roll is intentionally handled in its own safe procedure because its
-mechanical stops are asymmetric:
+Run the wrist-roll procedure after full calibration:
 
-```bash
+~~~bash
 pixi run calibrate --port /dev/ttyACM0 \
   --robot-id so_arm101_pgripper_follower \
   --calibration-dir config/hardware \
   --wrist-roll-only
-```
+~~~
 
-See the [description package README](src/so_arm101_pgripper_description/README.md)
-for the complete procedure and generated calibration files.
+The wrist-roll procedure measures its own asymmetric physical stops. Read the
+[description guide](src/so_arm101_pgripper_description/README.md) before you
+start either calibration task.
 
 ## Commands
 
-| Command | Purpose | Hardware effect |
+| Command | Purpose | Motor torque |
 | --- | --- | --- |
-| `pixi run build` | Build all packages | None |
-| `pixi run test` | Run the workspace tests | None |
-| `pixi run check` | Validate the generated URDF | None |
-| `pixi run display` | Robot model with joint sliders | None |
-| `pixi run moveit-demo` | Mock MoveIt planning | None |
-| `pixi run moveit-servo-demo` | Mock MoveIt Servo | None |
-| `pixi run real-rviz` | Read-only physical-state RViz mirroring | Reads serial state only |
-| `pixi run moveit-real` | Real MoveIt planning and execution | Enables torque |
-| `pixi run moveit-servo-real` | Real MoveIt Servo | Enables torque |
-| `pixi run calibrate ...` | Calibrate motors | Disables torque; writes EEPROM after confirmation |
+| `pixi run build` | Build all packages | Off |
+| `pixi run test` | Run workspace tests | Off |
+| `pixi run check` | Examine the generated URDF | Off |
+| `pixi run display` | Start the model with joint sliders | Off |
+| `pixi run moveit-demo` | Start mock MoveIt | Off |
+| `pixi run moveit-servo-demo` | Start mock MoveIt Servo | Off |
+| `pixi run real-rviz` | Read physical joint states in RViz | Off |
+| `pixi run moveit-real` | Plan and execute with MoveIt | On |
+| `pixi run moveit-servo-real` | Control the arm with Servo | On |
+| `pixi run calibrate ...` | Calibrate the motors | Off during motion |
 
 ## Workspace layout
 
-| Path | Responsibility |
+| Path | Purpose |
 | --- | --- |
-| `src/so_arm101_pgripper_description` | URDF/Xacro, calibration wrapper, RViz launch |
-| `src/so_arm101_pgripper_hardware` | Local SO-ARM101 `ros2_control` hardware plugin |
-| `src/so_arm101_pgripper_moveit_config` | MoveIt, Servo, controllers, keyboard and PS4 input |
-| `config/hardware` | Machine-specific calibration and joint-limit files |
-| `src/pick_ik` | Pinned upstream Pick IK submodule |
-| `src/feetech_ros2_driver` | Pinned upstream Feetech driver submodule |
-| `src/moveit_servo` | Pinned Servo fork containing the 5-DoF compatibility fix |
+| `src/so_arm101_pgripper_description` | URDF, Xacro, calibration, and RViz |
+| `src/so_arm101_pgripper_hardware` | Local SO-ARM101 hardware plugin |
+| `src/so_arm101_pgripper_moveit_config` | MoveIt, Servo, and input programs |
+| `config/hardware` | Machine-specific calibration and limits |
+| `src/pick_ik` | Pinned upstream Pick IK |
+| `src/feetech_ros2_driver` | Pinned upstream Feetech driver |
+| `src/moveit_servo` | Pinned Servo fork with the 5-DoF fix |
 
-The upstream sources are deliberately kept separate from workspace code. Exact
-versions and the one Servo-specific patch are recorded in [VENDORED.md](VENDORED.md).
+Read [VENDORED.md](VENDORED.md) for exact source revisions and the Servo patch.
 
-## Further reading
+## More detail
 
-- [MoveIt and Servo usage](src/so_arm101_pgripper_moveit_config/README.md)
-- [Calibration, real-state mirroring, and hardware provenance](src/so_arm101_pgripper_description/README.md)
-- [Pinned external dependencies](VENDORED.md)
+- [MoveIt and Servo guide](src/so_arm101_pgripper_moveit_config/README.md)
+- [Calibration and read-only RViz guide](src/so_arm101_pgripper_description/README.md)
+- [Pinned external sources](VENDORED.md)
