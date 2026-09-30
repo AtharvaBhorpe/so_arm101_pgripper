@@ -6,6 +6,7 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def _as_bool(value: str) -> bool:
@@ -30,7 +31,7 @@ def _launch_setup(context):
 
     share = Path(get_package_share_directory("so_arm101_pgripper_description"))
     description = {
-        "robot_description": Command(
+        "robot_description": ParameterValue(Command(
             [
                 FindExecutable(name="xacro"),
                 " ", str(share / "urdf" / "so_arm101_pgripper.urdf.xacro"),
@@ -41,7 +42,7 @@ def _launch_setup(context):
                 f" joint_limits_file:={limits}",
                 f" command_hardware:={str(not read_only).lower()}",
             ]
-        )
+        ), value_type=str)
     }
     nodes = [
         Node(

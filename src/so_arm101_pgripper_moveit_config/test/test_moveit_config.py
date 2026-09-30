@@ -91,6 +91,10 @@ def test_srdf_allows_intentional_pgripper_assembly_contacts():
         frozenset(("pgripper_gear_link", "pgripper_left_jaw_link")),
         frozenset(("pgripper_gear_link", "pgripper_right_jaw_link")),
     } <= allowed
+    assert {pair for pair in allowed if any(link.startswith("camera_") for link in pair)} == {
+        frozenset(("camera_mount_link", "pgripper_base_link")),
+        frozenset(("camera_link", "camera_mount_link")),
+    }
 
 
 def test_pick_ik_uses_position_and_orientation_costs():

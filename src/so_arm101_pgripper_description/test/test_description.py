@@ -156,3 +156,30 @@ def test_real_motion_control_exposes_position_commands():
     ).stdout
     control = ET.fromstring(xml).find("ros2_control")
     assert len(control.findall("./joint/command_interface[@name='position']")) == 6
+
+
+def test_camera_is_fixed_to_gripper_with_optical_frame():
+    for prefix in ("", "arm_"):
+        xml = subprocess.run(
+            ["xacro", str(XACRO), f"prefix:={prefix}"],
+            check=True, capture_output=True, text=True,
+        ).stdout
+        robot = ET.fromstring(xml)
+        for joint_name, parent, child in (
+            ("camera_mount_joint", "pgripper_base_link", "camera_mount_link"),
+            ("camera_joint", "camera_mount_link", "camera_link"),
+            ("camera_optical_joint", "camera_link", "camera_optical_frame"),
+        ):
+            joint = robot.find(f"joint[@name='{prefix}{joint_name}']")
+            assert joint is not None
+            assert joint.attrib["type"] == "fixed"
+            assert joint.find("parent").attrib["link"] == prefix + parent
+            assert joint.find("child").attrib["link"] == prefix + child
+            assert robot.find(f"link[@name='{prefix}{child}']") is not None
+        mount = robot.find(f"link[@name='{prefix}camera_mount_link']")
+        for geometry in ("visual", "collision"):
+            mesh = mount.find(f"{geometry}/geometry/mesh")
+            assert mesh.attrib["filename"].endswith("/gripper_camera_mount/CameraMount_square_27mm.stl")
+            assert mesh.attrib["scale"] == "0.001 0.001 0.001"
+        optical = robot.find(f"joint[@name='{prefix}camera_optical_joint']/origin")
+        assert optical.attrib["rpy"] == "-1.57079632679 0 -1.57079632679"

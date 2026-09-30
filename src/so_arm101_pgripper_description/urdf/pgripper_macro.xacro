@@ -2,11 +2,11 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="pgripper_meshes" value="package://so_arm101_pgripper_description/meshes/pgripper"/>
 
-  <xacro:macro name="pgripper_mesh_pair" params="filename xyz">
+  <xacro:macro name="pgripper_mesh_pair" params="filename xyz material:='pgripper'">
     <visual>
       <origin xyz="${xyz}" rpy="0 0 0"/>
       <geometry><mesh filename="${pgripper_meshes}/${filename}" scale="0.001 0.001 0.001"/></geometry>
-      <material name="pgripper"/>
+      <material name="${material}"/>
     </visual>
     <collision>
       <origin xyz="${xyz}" rpy="0 0 0"/>
@@ -28,6 +28,49 @@
     <joint name="${prefix}pgripper_mount_joint" type="fixed">
       <origin xyz="${mount_xyz}" rpy="${mount_rpy}"/>
       <parent link="${parent}"/><child link="${prefix}pgripper_base_link"/>
+    </joint>
+
+    <link name="${prefix}camera_mount_link">
+      <xacro:pgripper_mesh_pair filename="../gripper_camera_mount/CameraMount_square_27mm.stl" xyz="0 0 0" material="servo"/>
+    </link>
+    <joint name="${prefix}camera_mount_joint" type="fixed">
+      <!-- Align the STL's 14 mm base-hole pair with the gripper's top screw holes. -->
+      <origin xyz="0.00054014 0.01591577 0.01510416" rpy="0.01753082 0.00902913 1.55365078"/>
+      <parent link="${prefix}pgripper_base_link"/><child link="${prefix}camera_mount_link"/>
+    </joint>
+
+    <!-- Innomaker U20CAM-1080P, 27 mm hole spacing. Approximate PCB/lens envelope;
+         camera_link is at the PCB front center, +X along the lens axis. -->
+    <link name="${prefix}camera_link">
+      <visual>
+        <origin xyz="-0.0008 0 0"/>
+        <geometry><box size="0.0016 0.032 0.032"/></geometry>
+        <material name="servo"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.0008 0 0"/>
+        <geometry><box size="0.0016 0.032 0.032"/></geometry>
+      </collision>
+      <visual>
+        <origin xyz="0.0125 0 0" rpy="0 1.57079632679 0"/>
+        <geometry><cylinder radius="0.008" length="0.025"/></geometry>
+        <material name="servo"/>
+      </visual>
+      <collision>
+        <origin xyz="0.0125 0 0" rpy="0 1.57079632679 0"/>
+        <geometry><cylinder radius="0.008" length="0.025"/></geometry>
+      </collision>
+    </link>
+    <joint name="${prefix}camera_joint" type="fixed">
+      <!-- Center of the STL's 27 mm hole pattern; lens points toward the jaws. -->
+      <origin xyz="-0.00484538 0 0.05103205" rpy="0 0.436332313 0"/>
+      <parent link="${prefix}camera_mount_link"/><child link="${prefix}camera_link"/>
+    </joint>
+    <link name="${prefix}camera_optical_frame"/>
+    <joint name="${prefix}camera_optical_joint" type="fixed">
+      <!-- Nominal lens-front origin: calibrate for vision. +Z forward, +X right, +Y down. -->
+      <origin xyz="0.025 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+      <parent link="${prefix}camera_link"/><child link="${prefix}camera_optical_frame"/>
     </joint>
 
     <link name="${prefix}pgripper_servo_link">
