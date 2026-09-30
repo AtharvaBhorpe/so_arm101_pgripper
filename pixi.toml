@@ -48,6 +48,9 @@ pytest = ">=8,<9"
 range-v3 = ">=0.12,<0.13"
 spdlog = "*"
 yaml-cpp = "*"
+ros-jazzy-usb-cam = ">=0.8.1,<0.9"
+ros-jazzy-ament-lint-auto = ">=0.17.5,<0.18"
+ros-jazzy-ament-lint-common = ">=0.17.5,<0.18"
 
 [pypi-dependencies]
 lerobot = { version = "==0.6.1", extras = ["feetech"] }
@@ -76,3 +79,4 @@ servo-keyboard-input = { cmd = "bash -c 'source install/setup.bash && ros2 run s
 moveit-servo-ps4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_demo.launch.py input_device:=ps4'", depends-on = ["build"] }
 servo-ps4-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
 calibrate = "python src/so_arm101_pgripper_description/scripts/calibrate_so_arm101_pgripper.py"
+gripper-cam = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_cameras gripper_camera.launch.py'"
