@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -12,7 +13,7 @@ def generate_launch_description():
         [package_share, "urdf", "so_arm101_pgripper.urdf.xacro"]
     )
     robot_description = {
-        "robot_description": Command(
+        "robot_description": ParameterValue(Command(
             [
                 FindExecutable(name="xacro"),
                 " ",
@@ -20,7 +21,7 @@ def generate_launch_description():
                 " use_ros2_control:=",
                 LaunchConfiguration("use_ros2_control"),
             ]
-        )
+        ), value_type=str)
     }
 
     return LaunchDescription(
