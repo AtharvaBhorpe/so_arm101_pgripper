@@ -51,6 +51,9 @@ yaml-cpp = "*"
 ros-jazzy-usb-cam = ">=0.8.1,<0.9"
 ros-jazzy-ament-lint-auto = ">=0.17.5,<0.18"
 ros-jazzy-ament-lint-common = ">=0.17.5,<0.18"
+ros-jazzy-camera-calibration = ">=5.0.11,<6"
+semver = ">=3.1.0,<4"  # needed by ros-jazzy-camera-calibration
+ros-jazzy-image-proc = ">=5.0.11,<6"
 
 [pypi-dependencies]
 lerobot = { version = "==0.6.1", extras = ["feetech"] }

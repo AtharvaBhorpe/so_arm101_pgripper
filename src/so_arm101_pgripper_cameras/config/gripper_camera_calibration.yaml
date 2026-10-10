@@ -1,0 +1,28 @@
+image_width: 1280
+image_height: 720
+camera_name: gripper_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1062.9552590981268, 0, 586.96477675128847, 0, 1061.0780596993211, 418.95591086714143, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.48729951756808654, 0.22328964397337178, -0.0092010518372207441, 0.00086924935412355611, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [843.33605960608679, 0, 564.41002150274619, 0, 0, 995.25979952246882, 422.46942303710881, 0, 0, 0, 1, 0]
+binning_x: 0
+binning_y: 0
+roi:
+  x_offset: 0
+  y_offset: 0
+  height: 0
+  width: 0
+  do_rectify: false
