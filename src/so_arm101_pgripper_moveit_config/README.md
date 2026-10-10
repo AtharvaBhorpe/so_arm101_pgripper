@@ -1,93 +1,90 @@
-# SO-ARM101 pgripper MoveIt 2 configuration
+# SO-ARM101 MoveIt and Servo
 
-This package starts MoveIt 2, RViz, and mock `ros2_control` controllers for the SO-ARM101 pgripper robot.
+This package provides MoveIt 2 and Servo launches for mock and real hardware.
 
-Five body joints form the `arm` planning group. The `gripper` motor forms a separate one-joint planning group.
+The `arm` planning group contains five arm joints.
+The `gripper` motor forms a separate one-joint group.
+The two jaw joints mimic the gripper motor.
+MoveIt does not command the jaw joints directly.
 
-The two jaw joints mimic the `gripper` motor. MoveIt does not send commands to the jaw joints.
+## Start mock MoveIt
 
-## Start the mock demo
-
-Install the Pixi environment.
+From the workspace root, install the dependencies:
 
 ```bash
 pixi install
 ```
 
-Build the workspace.
+Build the workspace:
 
 ```bash
 pixi run build
 ```
 
-Start MoveIt 2 and RViz.
+Start the mock demo:
 
 ```bash
 pixi run moveit-demo
 ```
 
-CAUTION: Do not start the real driver during this demo. Two drivers can send conflicting motor commands.
+The demo uses `mock_components/GenericSystem`.
+It does not open a serial port or enable motor torque.
 
-The demo uses `mock_components/GenericSystem`. It does not open a serial port or enable motor torque.
+Do not start the real driver during this demo.
+The mock launch is not a real-arm startup procedure.
 
 ## Plan in RViz
 
-1. Select `arm` in the MotionPlanning panel.
-2. Set the start state to `Current`.
-3. Move the interactive tool marker to a reachable pose.
-4. Keep `Use Approximate IK` active.
-5. Select `Plan & Execute`.
+1. Select the `arm` group in the MotionPlanning panel.
+2. Set the start state to the current state.
+3. Keep approximate IK active.
+4. Move the tool marker to a reachable pose.
+5. Select **Plan**.
+6. Examine the path.
+7. Select **Execute**.
 
-Select `gripper` to plan the open or closed motor position.
+For gripper motion, select the `gripper` group.
+Choose the `open` or `close` named state.
 
-## Orientation behavior
+## IK limits
 
-The arm has five body degrees of freedom. It cannot satisfy every position and orientation combination in six-dimensional task space.
+The arm has five degrees of freedom.
+It cannot satisfy every six-dimensional position and orientation target.
 
-The vendored `pick_ik` solver minimizes position and orientation errors together. The configuration gives position more weight than orientation.
+The `pick_ik` solver minimizes position and orientation errors together.
+The configuration gives position more weight than orientation.
+The solver searches for a pose within the configured error thresholds.
+It can report no solution.
 
-For an unreachable orientation, MoveIt finds the best pose inside the configured error thresholds or reports no solution.
+## Real MoveIt
 
-## Configuration files
+> [!WARNING]
+> Complete the read-only robot checks before this task.
+> Support the arm. Keep the power connector accessible.
+> This task enables torque on all six motors.
 
-- `so_arm101_pgripper.srdf` defines the planning groups and the tool.
-- `kinematics.yaml` selects `pick_ik` for the arm.
-- `ompl_planning.yaml` configures OMPL planning.
-- `moveit_controllers.yaml` maps MoveIt trajectories to two controllers.
-- `ros2_controllers.yaml` configures the mock controllers.
-- `joint_limits.yaml` gives MoveIt the description limits.
-
-The vendored sources are in `src/pick_ik` and `src/moveit_servo`.
-
-Each `VENDORED.md` file records the source revision, local patch, and license.
-
-## Test pick_ik on the real robot
-
-CAUTION: Support the arm and keep the power connector accessible. This task enables torque on all six motors.
+Run:
 
 ```bash
 pixi run moveit-real
 ```
 
-The launch uses the calibrated Feetech configuration and position limits. It starts the real controllers, MoveGroup, `pick_ik`, and RViz.
+The launch starts the real controllers, MoveGroup, Pick IK, and RViz.
+It uses the calibrated motor configuration and joint limits.
 
-Before execution, set velocity and acceleration scaling to `0.05` in RViz. Use `Plan` first. Use `Execute` only for a small reachable change.
+1. Set velocity and acceleration scales to `0.05`.
+2. Select **Plan**.
+3. Examine the path.
+4. Execute only a small reachable motion.
 
-Stop the launch immediately if the arm jumps, vibrates, buzzes, or moves in the wrong direction.
+If the arm jumps, vibrates, buzzes, or moves in the wrong direction, stop the launch immediately.
 
-## Start MoveIt Servo
+## Mock Servo
 
-Servo controls the five arm joints. The gripper remains a separate sixth actuator.
+Servo controls the five arm joints.
+The gripper remains a separate actuator.
 
-Start Servo without an input device.
-
-```bash
-pixi run moveit-servo-demo
-```
-
-Use two terminals for separate Servo and keyboard processes.
-
-Start Servo and RViz in terminal 1.
+In terminal 1, start Servo and RViz:
 
 ```bash
 pixi run moveit-servo-demo
@@ -95,90 +92,129 @@ pixi run moveit-servo-demo
 
 Wait for `Servo initialized successfully`.
 
-Start the keyboard input in terminal 2.
+Choose one input process in terminal 2.
+
+### Keyboard input
 
 ```bash
 pixi run servo-keyboard-input
 ```
 
-Focus terminal 2 before you press a control key. Do not press Enter after a control key.
+Focus the input terminal before pressing control keys.
+Do not press Enter after a control key.
 
-The combined `pixi run moveit-servo-keyboard` task remains available.
+The combined `pixi run moveit-servo-keyboard` task is also available.
 
-Use the same terminal 1 command for separate PS4 input.
-
-Start the PS4 input in terminal 2.
+### PS4 input
 
 ```bash
 pixi run servo-ps4-input
 ```
 
-The combined `pixi run moveit-servo-ps4` task remains available.
+The combined `pixi run moveit-servo-ps4` task is also available.
 
-These launches use mock hardware. They do not open a serial port or enable motor torque.
+These demo tasks use mock hardware.
+They do not open a serial port or enable motor torque.
 
-## Start MoveIt Servo on the real robot
+## Real Servo
 
-CAUTION: Support the arm and keep the power connector accessible. This task enables torque on the five arm motors and the gripper motor.
+> [!WARNING]
+> Complete the read-only robot checks before this task.
+> Support the arm. Keep the power connector accessible.
+> This task enables torque on the arm and gripper motors.
 
-Start the real Servo launch with no input device:
+In terminal 1, run:
 
 ```bash
 pixi run moveit-servo-real
 ```
 
-The task uses the calibrated control YAML and joint-limit YAML for `so_arm101_pgripper_follower`. It uses `/dev/ttyACM0` by default. Change the port in `pixi.toml` when Linux assigns a different device path.
+The task uses the calibration for `so_arm101_pgripper_follower`.
+The default port is `/dev/ttyACM0`.
 
-Start keyboard input in another terminal:
+If Linux assigns another port, update the task in `pixi.toml`.
+
+When Servo reports that it is ready, choose one input process in another terminal.
+
+For keyboard input:
 
 ```bash
 pixi run servo-keyboard-input
 ```
 
-Start PS4 input in another terminal:
+For PS4 input:
 
 ```bash
 pixi run servo-ps4-input
 ```
 
-Start with low scale values and small single-joint motions. Stop the launch if the arm jumps, vibrates, buzzes, or moves in the wrong direction.
+Start with low speed scales and small single-joint motions.
 
-### Keyboard map
+If the arm jumps, vibrates, buzzes, or moves in the wrong direction, stop the launch immediately.
+
+Do not connect the mock Servo launch to the real driver.
+
+## Keyboard controls
 
 The keyboard starts in Cartesian mode.
 
-- Use `w/s`, `a/d`, and `r/f` for linear X, Y, and Z motion.
-- Use `u/o`, `i/k`, and `j/l` for roll, pitch, and yaw motion.
-- Press `m` to change between Cartesian mode and joint mode.
-- In joint mode, use `1/q` through `5/t` for positive and negative motion.
-- Press `g` to toggle the gripper between open and closed.
-- Press `c` to change between `base_link` and `gripper_frame_link`.
-- Press Space to send a zero command.
-- Press `x` to exit.
+| Keys | Action |
+| --- | --- |
+| `w/s`, `a/d`, `r/f` | Linear X, Y, and Z motion |
+| `u/o`, `i/k`, `j/l` | Roll, pitch, and yaw motion |
+| `m` | Switch between Cartesian and joint modes |
+| `1/q` through `5/t` | Positive and negative joint motion in joint mode |
+| `g` | Toggle the gripper |
+| `c` | Switch between `base_link` and `gripper_frame_link` |
+| Space | Send a zero command |
+| `x` | Exit keyboard input |
 
-### PS4 map
+## PS4 controls
 
 Hold `L1` as the deadman control.
 
-- The left stick controls linear X and Y motion.
-- The triggers control linear Z motion.
-- The right stick controls angular X and Y motion.
-- The horizontal direction pad controls angular Z motion.
-- Hold `R1` with `L1` to send joint commands.
-- In joint mode, the sticks control four flex joints and the triggers control wrist roll.
-- Press Triangle to change the command frame.
-- Hold `L1` and press Cross to toggle the gripper between open and closed.
+| Input | Action |
+| --- | --- |
+| Left stick | Linear X and Y motion |
+| Triggers | Linear Z motion |
+| Right stick | Angular X and Y motion |
+| Horizontal direction pad | Angular Z motion |
+| `R1` with `L1` | Joint-command mode |
+| Sticks in joint mode | Four flex joints |
+| Triggers in joint mode | Wrist roll |
+| Triangle | Change the command frame |
+| Cross with `L1` | Toggle the gripper |
 
-The Linux `joy` axis order can differ between controller drivers. Read `/joy` before real-arm use.
+The Linux `joy` axis order can differ between controller drivers.
+Before real-arm use, examine `/joy` and the axis configuration.
 
-## Servo limits
+## Servo limits and local patch
 
-The Cartesian command contains six velocity components. The five-joint arm cannot satisfy all six components at every pose.
+Cartesian commands contain six velocity components.
+The five-joint arm cannot satisfy all six components at every pose.
 
-Servo finds a feasible joint velocity or stops near a singularity. Position and orientation behavior depends on the current arm pose.
+Servo computes a feasible joint velocity or stops near a singularity.
+The result depends on the current arm pose.
 
-The Servo configuration uses measured Jacobian condition numbers for this robot. It starts singularity scaling at `30` and stops at `60`.
+The configuration starts singularity scaling at `30` and stops at `60`.
 
-The local MoveIt Servo patch uses five thin-SVD columns for the 6-by-5 Jacobian. Upstream 2.12.4 incorrectly indexes a sixth column. Servo also routes the five-joint group through the Jacobian pseudoinverse. MoveGroup keeps the vendored `pick_ik` solver for pose planning.
+The local Servo patch uses five thin-SVD columns for the 6-by-5 Jacobian.
+Upstream 2.12.4 incorrectly indexes a sixth column.
+The patch also routes the five-joint group through the Jacobian pseudoinverse.
+MoveGroup retains Pick IK for pose planning.
 
-CAUTION: Do not connect this mock Servo launch to the real driver. The real-arm Servo path needs separate hardware safety gates.
+## Configuration files
+
+| File | Purpose |
+| --- | --- |
+| `so_arm101_pgripper.srdf` | Planning groups, named states, and collision exclusions |
+| `kinematics.yaml` | Pick IK configuration |
+| `ompl_planning.yaml` | OMPL planning configuration |
+| `moveit_controllers.yaml` | MoveIt trajectory-controller mappings |
+| `ros2_controllers.yaml` | Mock controller configuration |
+| `joint_limits.yaml` | MoveIt joint limits |
+| `servo.yaml` | Servo configuration |
+| `ps4.yaml` | PS4 axis and button mapping |
+
+The workspace [source record](../../VENDORED.md)
+lists the pinned repositories and commits.

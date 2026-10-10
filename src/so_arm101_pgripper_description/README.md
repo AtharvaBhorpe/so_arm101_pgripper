@@ -1,16 +1,22 @@
-# SO-ARM101 + NormaCore pgripper
+# SO-ARM101 robot description
 
-ROS 2 Jazzy/Pixi workspace containing the combined robot description, a vendored Feetech `ros2_control` driver, exact real-state RViz mirroring, and a LeRobot 0.6.1 calibration workflow. The six physical motors keep the standard names and IDs:
+This package defines the SO-ARM101 and NormaCore pgripper model.
+It provides motor-calibration procedures and RViz launch files.
 
-| ID | Joint | Calibration meaning |
-|---:|---|---|
-| 1–4 | `shoulder_pan`, `shoulder_lift`, `elbow_flex`, `wrist_flex` | tick 2048 = 0 rad; measured range is safely symmetrized around zero |
-| 5 | `wrist_roll` | tick 2048 = 0 rad at the visually upright jaw pose; separately measured physical stops give asymmetric safe limits |
-| 6 | `gripper` | EEPROM closed = tick 2048; ROS open = 0 rad; closing increases the ROS angle |
+## Joints and calibration conventions
 
-The two jaw joints are prismatic mimics of the single `gripper` motor. `gripper_frame_link`/`tool0` remain the tool frames for IK.
+| Motor ID | Joint | Convention |
+| --- | --- | --- |
+| 1–4 | `shoulder_pan`, `shoulder_lift`, `elbow_flex`, `wrist_flex` | Tick 2048 maps to 0 rad. The body ranges are symmetric around zero. |
+| 5 | `wrist_roll` | Tick 2048 maps to the visually upright jaw pose. Separate measurements provide asymmetric limits. |
+| 6 | `gripper` | EEPROM closed position is tick 2048. ROS open position is 0 rad. Positive angles close the jaws. |
 
-## Install and validate
+The two jaw joints are prismatic mimics of the `gripper` motor.
+`gripper_frame_link` and `tool0` define the tool frames for IK.
+
+## Build and inspect the model
+
+From the workspace root, run:
 
 ```bash
 pixi install
@@ -20,37 +26,53 @@ pixi run check
 pixi run display
 ```
 
-`pixi run display` is simulation-only and opens the joint sliders. No serial device is touched.
+`pixi run display` starts the model and joint sliders.
+It does not open a motor serial port.
 
-## MoveIt 2 mock demo
-
-Build and start the mock MoveIt 2 system.
+For mock planning, run:
 
 ```bash
 pixi run moveit-demo
 ```
 
-CAUTION: Do not start the real driver during this demo. Two drivers can send conflicting motor commands.
+The mock launch does not open the serial port.
+The arm group contains five arm joints.
+The gripper motor is a separate actuator.
 
-The demo starts RViz, MoveIt 2, OMPL, vendored `pick_ik`, and mock controllers. It does not open the serial port.
+The [MoveIt guide](../so_arm101_pgripper_moveit_config/README.md)
+describes planning, approximate IK, and Servo.
 
-The arm group has five body joints. The gripper group has one motor joint and two passive mimic jaw joints.
+## Calibrate the physical arm
 
-The solver includes end-effector orientation in its cost. Five body joints cannot satisfy every six-dimensional pose exactly.
+> [!WARNING]
+> Support the arm throughout calibration. Disabling torque can let the arm fall.
+> Calibration can rewrite motor EEPROM.
 
-Use approximate IK in RViz for the best reachable position and orientation. Read the MoveIt package [README](../so_arm101_pgripper_moveit_config/README.md) for details.
+The examples use the robot ID `lab_follower`.
+The workspace Pixi tasks use `so_arm101_pgripper_follower`.
+These IDs select different calibration files.
 
-## Calibrate the physical follower
+### Identify the serial device
 
-Calibration disables torque and rewrites EEPROM on motor IDs 1–6. Support the arm throughout. First identify the current port and verify read-only communication; never assume an old `/dev/ttyACM0` assignment is still this robot:
+Find the current port:
 
 ```bash
 pixi run lerobot-find-port
-pixi run ./install/feetech_ros2_driver/bin/demo ping /dev/ttyACM0
-# Enter servo ID 1 when prompted; continue only after "Ping success".
 ```
 
-Then run the package wrapper, which invokes the official `lerobot-calibrate` command and post-processes its output:
+Ping the example port:
+
+```bash
+pixi run ./install/feetech_ros2_driver/bin/demo ping /dev/ttyACM0
+```
+
+At the prompt, enter servo ID 1.
+Continue only after `Ping success`.
+Do not assume that an old `/dev/ttyACM0` assignment still identifies this robot.
+
+### Run full calibration
+
+Run the wrapper:
 
 ```bash
 pixi run calibrate \
@@ -61,16 +83,25 @@ pixi run calibrate \
 
 At the first pose prompt:
 
-1. Put shoulder pan/lift, elbow, wrist flex, and wrist roll at their physical middle positions.
-2. Close the pgripper completely without squeezing it under load.
+1. Put shoulder pan, shoulder lift, elbow, wrist flex, and wrist roll at their physical middle positions.
+2. Close the pgripper completely without an external load.
 3. Press Enter.
-4. During the sweep, move joints 1–4 slowly through their safe travel and move the pgripper from fully closed to fully open. LeRobot intentionally excludes wrist roll from this sweep.
 
-LeRobot 0.6.1 initially centers at 2047. The wrapper shifts EEPROM offsets and ranges by one tick.
+During the sweep:
 
-The wrapper symmetrizes the body ranges around 2048. It maps the measured gripper open tick to 0 rad.
+1. Move joints 1–4 slowly through their permitted travel.
+2. Move the pgripper from fully closed to fully open.
 
-The stock LeRobot sweep excludes wrist roll. Its mechanical limiter is not necessarily centered on the upright jaw pose. After the full calibration, correct motor 5 alone:
+LeRobot excludes wrist roll from this sweep.
+
+LeRobot 0.6.1 initially centers at 2047.
+The wrapper shifts EEPROM offsets and ranges by one tick.
+It makes the body ranges symmetric around 2048.
+It maps the measured gripper-open tick to 0 rad.
+
+### Measure wrist-roll limits
+
+After full calibration, run:
 
 ```bash
 pixi run calibrate \
@@ -80,30 +111,51 @@ pixi run calibrate \
   --wrist-roll-only
 ```
 
-Keep the arm supported. First place the jaws visually upright. Then move wrist roll gently counterclockwise to one stop and clockwise to the other stop when prompted. The script keeps torque disabled, adds a 64-tick margin at both measured stops, displays the proposed asymmetric ROS range, and writes only motor 5 after the exact `WRITE_WRIST_EEPROM` confirmation. It refuses to start if motor 5 EEPROM does not match the saved JSON calibration.
+1. Support the arm.
+2. Place the jaws visually upright.
+3. At the prompt, move wrist roll gently counterclockwise to its stop.
+4. At the next prompt, move wrist roll gently clockwise to its stop.
+5. Examine the proposed limits before the EEPROM-write confirmation.
 
-The wrapper writes the aligned values back to EEPROM and saves:
+The script keeps torque disabled and adds a 64-tick margin.
+It writes motor 5 only after `WRITE_WRIST_EEPROM` confirmation.
+
+If motor 5 EEPROM differs from the saved JSON calibration, the script refuses to start.
+
+### Calibration files
+
+The wrapper saves these files for the example ID:
 
 ```text
-config/hardware/lab_follower.json                 # LeRobot calibration
-config/hardware/lab_follower.state.yaml           # ROS read-only mapping; no EEPROM fields
-config/hardware/lab_follower.control.yaml         # ROS motion + EEPROM/safety fields
-config/hardware/lab_follower.joint_limits.yaml    # calibrated Xacro/controller limits
-config/hardware/lab_follower.*.raw-lerobot.json   # untouched backup
-config/hardware/lab_follower.*.previous.json      # prior aligned run, if present
+config/hardware/lab_follower.json
+config/hardware/lab_follower.state.yaml
+config/hardware/lab_follower.control.yaml
+config/hardware/lab_follower.joint_limits.yaml
+config/hardware/lab_follower.*.raw-lerobot.json
+config/hardware/lab_follower.*.previous.json
 ```
 
-## Gate 1: torque-off RViz mirroring
+| File | Purpose |
+| --- | --- |
+| `.json` | Aligned LeRobot calibration |
+| `.state.yaml` | Read-only ROS mapping without EEPROM fields |
+| `.control.yaml` | Motion configuration and EEPROM fields |
+| `.joint_limits.yaml` | Calibrated joint limits |
+| `.raw-lerobot.json` | Original LeRobot output |
+| `.previous.json` | Previous aligned calibration, when present |
 
-Do not run LeRobot at the same time; both programs need exclusive ownership of the serial bus.
+## Physical check 1: read-only RViz
 
-For the calibrated follower on `/dev/ttyACM0`, use the read-only Pixi task:
+Do not run LeRobot and the ROS driver at the same time.
+Both require exclusive access to the serial bus.
+
+For the workspace's `so_arm101_pgripper_follower` configuration, run:
 
 ```bash
 pixi run real-rviz
 ```
 
-The equivalent full command is:
+For the `lab_follower` example, run these commands inside the Pixi environment:
 
 ```bash
 source install/setup.bash
@@ -114,15 +166,25 @@ ros2 launch so_arm101_pgripper_description real.launch.py \
   read_only:=true
 ```
 
-Move each limp body joint by hand. RViz must follow the same direction. The centered body pose must read 0 rad.
+1. Support the arm.
+2. Move each arm joint by hand.
+3. Make sure that RViz follows the same direction.
+4. Make sure that centered arm joints show 0 rad.
+5. Open the gripper.
+6. Make sure that `gripper` shows 0 rad.
+7. Close the gripper by hand.
+8. Make sure that the ROS gripper angle increases.
 
-Open the limp gripper. RViz must show 0 rad. Closing the gripper must increase the ROS `gripper` value.
+If a joint wraps, times out, or moves in the wrong direction, stop the procedure.
+If the wrong joint responds, stop the procedure.
 
-Stop on wraparound, a read timeout, a wrong joint, or a direction mismatch.
+## Physical check 2: motor motion
 
-## Gate 2: torque-enabled motion
+> [!WARNING]
+> Complete the read-only check before motor motion.
+> Support the arm. Keep the power connector accessible.
 
-Only after Gate 1 passes:
+Inside the Pixi environment, run:
 
 ```bash
 source install/setup.bash
@@ -134,11 +196,19 @@ ros2 launch so_arm101_pgripper_description real.launch.py \
   confirm_hardware:=MOVE_REAL_ARM
 ```
 
-This activates `/arm_controller/follow_joint_trajectory`, the standard interface for MoveIt 2 and ROS agents. On activation the driver seeds commands from measured positions, then enables torque. Begin with supported, low-speed, single-joint goals well inside the calibrated limits.
+This starts the `/arm_controller/follow_joint_trajectory` interface.
+The driver initializes commands from measured positions before it enables torque.
 
-## LeRobot, datasets, and a future leader
+Begin with small, low-speed, single-joint goals inside the calibrated limits.
 
-Use the same ID and directory in LeRobot so policies see the aligned JSON:
+Software tests do not establish physical collision safety.
+These physical checks assess joint behavior, not every possible collision.
+
+## LeRobot compatibility
+
+Use the same robot ID and calibration directory in LeRobot.
+
+The existing example uses:
 
 ```bash
 lerobot-teleoperate \
@@ -148,10 +218,52 @@ lerobot-teleoperate \
   --robot.calibration_dir=$PWD/config/hardware
 ```
 
-The follower remains a normal `so101_follower`: body observations/actions are degrees, while `gripper.pos` is 0–100. For the future WH148 leader, map potentiometer midpoints to the five body-joint zero positions and map the click button to gripper 0/100; dataset recording and ACT/VLA code can then retain LeRobot's standard feature names. Add that leader driver when the potentiometer ADC, electrical range, and button behavior are known.
+This example specifies the follower.
+A complete teleoperation setup also requires an input device and its configuration.
 
-## Model and provenance
+LeRobot uses degrees for arm observations and actions.
+Its `gripper.pos` range is 0–100.
+The WH148 leader is not implemented.
 
-The body geometry and frames come from TheRobotStudio's SO-ARM101 description. The pgripper geometry and mimic kinematics come from NormaCore's ElRobot URDF. The measured pgripper mount is `xyz="0 0 0"`, `rpy="-pi/2 0 -pi/2"`. Full source revisions, modifications, and licenses are in [ATTRIBUTION.md](ATTRIBUTION.md).
+## Model sources
 
-Software validation does not prove the physical mount transform, wiring, bus integrity, or collision safety. Those require the two gates above on your actual arm.
+The body geometry and frames come from TheRobotStudio's SO-ARM101 description.
+The pgripper geometry and mimic kinematics come from NormaCore's ElRobot URDF.
+
+The configured pgripper mount is:
+
+```text
+xyz="0 0 0"
+rpy="-pi/2 0 -pi/2"
+```
+
+[ATTRIBUTION.md](ATTRIBUTION.md) records source revisions, modifications, and licenses.
+
+## Gripper camera model
+
+![Physical SO-ARM101 with the camera bracket above the orange pgripper](../../docs/images/gripper-camera-hardware.png)
+*Camera bracket attached to the gripper body.*
+
+The description defines these links:
+
+- `camera_mount_link`
+- `camera_link`
+- `camera_optical_frame`.
+
+Fixed joints connect them to the gripper body.
+
+The mount uses `CameraMount_square_27mm.stl`.
+The camera body and lens use approximate primitive geometry.
+The optical-center offset is nominal, not a hand–eye calibration result.
+
+MoveIt excludes two intentional assembly contacts:
+
+- `pgripper_base_link` with `camera_mount_link`
+- `camera_mount_link` with `camera_link`.
+
+Other camera collision checks remain enabled.
+
+The [camera package](../so_arm101_pgripper_cameras/README.md)
+provides capture and intrinsic calibration.
+Intrinsic calibration does not determine the camera-to-gripper transform.
+Physical optical-frame alignment remains unverified.
