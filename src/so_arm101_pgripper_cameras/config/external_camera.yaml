@@ -1,0 +1,10 @@
+/external_camera/usb_cam:
+  ros__parameters:
+    image_width: 1920
+    image_height: 1080
+    framerate: 15.0
+    pixel_format: mjpeg2rgb
+    io_method: mmap
+    brightness: 0
+    camera_name: external_camera
+    frame_id: external_camera_optical_frame

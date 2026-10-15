@@ -1,6 +1,6 @@
 # SO-ARM101 cameras
 
-This package configures the gripper camera through `usb_cam`.
+This package configures the gripper camera and external UGREEN webcam through `usb_cam`.
 It does not control motors or publish robot TF.
 
 The connected device identifies as `Innomaker-U20CAM-720P`.
@@ -8,7 +8,8 @@ It advertises a maximum resolution of 1280×720.
 The original hardware description named U20CAM-1080P.
 The capture configuration follows the connected device.
 
-This package currently supports only the gripper camera.
+The following capture and calibration procedures describe the gripper camera.
+The External webcam section describes the UGREEN configuration.
 
 ## Start capture
 
@@ -254,6 +255,78 @@ These warnings did not prevent the measured raw capture rate.
 In this environment, a best-effort `ros2 topic hz` subscriber understated raw-image delivery.
 A reliable subscriber measured about 30 fps.
 RViz's rendering rate is not the camera frame rate.
+
+## External webcam
+
+The fixed UGREEN webcam provides an external view of the workspace.
+It uses a separate namespace and intrinsic calibration.
+
+After the initial package build, start capture:
+
+```bash
+pixi run external-cam
+```
+
+The task does not rebuild the package automatically.
+It does not control motors or publish a camera-to-base transform.
+
+| Property | Value |
+| --- | --- |
+| Node | `/external_camera/usb_cam` |
+| Image topic | `/external_camera/image_raw` |
+| Calibration topic | `/external_camera/camera_info` |
+| Image frame | `external_camera_optical_frame` |
+| Resolution | 1920×1080 |
+| Requested frame rate | 15 fps |
+| Measured delivery | 292 images in 20 seconds, about 14.6 fps |
+| Pixel format | `mjpeg2rgb` |
+| Capture method | `mmap` |
+
+The default device identity is:
+
+```text
+/dev/v4l/by-id/usb-UGREEN_Camera_UGREEN_Camera_SN0001-video-index0
+```
+
+Launch resolves the symlink before passing the path to the driver.
+It sets `exposure_dynamic_framerate=0` before capture.
+If this command fails or exceeds 10 seconds, launch stops.
+
+The package contains three external-camera files:
+
+- `config/external_camera.yaml` defines capture parameters.
+- `config/external_camera_calibration.yaml` stores intrinsic calibration.
+- `launch/external_camera.launch.py` starts the driver.
+
+Calibration used 82 samples at 1920×1080.
+The checkerboard had 8×6 inner corners and 0.025 m square sides.
+Live straightness errors in the examined views ranged from 0.28 to 0.63 pixels.
+These values do not establish 3D pose accuracy.
+
+The calibration applies to this webcam, lens focus, and image mode.
+It is not interchangeable with the gripper-camera calibration.
+
+To repeat external-camera calibration, keep capture active and run:
+
+```bash
+pixi run ros2 run camera_calibration cameracalibrator \
+  --size 8x6 \
+  --square 0.025 \
+  --camera_name external_camera \
+  --ros-args \
+  -r image:=/external_camera/image_raw \
+  -r camera/set_camera_info:=/external_camera/usb_cam/set_camera_info
+```
+
+Back up the calibration file before COMMIT.
+The package launch saves to the installed calibration URL.
+With a symlink install, COMMIT can overwrite the source calibration file.
+
+Raw images retain lens distortion.
+The external-camera launch does not start a rectifier.
+
+Camera-to-base calibration remains unfinished.
+Camera-frame detections cannot yet provide trusted robot-frame grasp targets.
 
 ## Responsibilities
 

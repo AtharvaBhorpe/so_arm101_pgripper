@@ -83,3 +83,4 @@ moveit-servo-ps4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch so
 servo-ps4-input = { cmd = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_moveit_config servo_ps4_input.launch.py'", depends-on = ["build"] }
 calibrate = "python src/so_arm101_pgripper_description/scripts/calibrate_so_arm101_pgripper.py"
 gripper-cam = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_cameras gripper_camera.launch.py'"
+external-cam = "bash -c 'source install/setup.bash && ros2 launch so_arm101_pgripper_cameras external_camera.launch.py'"
