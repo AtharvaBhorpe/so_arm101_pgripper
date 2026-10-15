@@ -1,0 +1,28 @@
+image_width: 1920
+image_height: 1080
+camera_name: external_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1118.1116939728502, 0, 952.20868667447303, 0, 1130.79106087675, 633.31993655730525, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.0046188266586288176, -0.0076353059399066224, 0.0084044000540193647, 0.0066666769377318738, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1122.8559003198723, 0, 969.73103079087923, 0, 0, 1139.3158624224909, 645.13426266781721, 0, 0, 0, 1, 0]
+binning_x: 0
+binning_y: 0
+roi:
+  x_offset: 0
+  y_offset: 0
+  height: 0
+  width: 0
+  do_rectify: false

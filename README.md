@@ -8,7 +8,7 @@ The workspace provides:
 - Motor calibration and read-only RViz
 - Mock and real MoveIt 2 planning with Pick IK
 - MoveIt Servo with keyboard or PS4 input
-- Gripper camera capture and intrinsic calibration.
+- Gripper and external webcam capture with separate intrinsic calibrations.
 
 ![SO-ARM101 with a gripper-mounted camera beside a laptop showing the robot model](docs/images/robot-workstation.png)
 *SO-ARM101 with the NormaCore pgripper and wrist-mounted camera.*
@@ -195,6 +195,23 @@ Hand–eye calibration is not implemented.
 Read the [camera guide](src/so_arm101_pgripper_cameras/README.md)
 for calibration, device selection, and known limitations.
 
+## External webcam
+
+After the initial camera-package build, start the fixed UGREEN webcam:
+
+```bash
+pixi run external-cam
+```
+
+The launch uses 1920×1080 images with a requested rate of 15 fps.
+A reliable subscriber measured about 14.6 fps.
+
+The driver loads the external webcam's calibration from the installed package.
+Camera-to-base calibration remains unfinished.
+
+Read the [camera guide](src/so_arm101_pgripper_cameras/README.md#external-webcam)
+for topics, device selection, and calibration.
+
 ## Commands
 
 | Command | Purpose | Motor action |
@@ -210,6 +227,7 @@ for calibration, device selection, and known limitations.
 | `pixi run moveit-servo-real` | Start real Servo | Enables torque |
 | `pixi run calibrate ...` | Calibrate the motors | Disables torque during calibration |
 | `pixi run gripper-cam` | Start calibrated raw capture | Does not control physical motors |
+| `pixi run external-cam` | Start the calibrated external webcam | Does not control physical motors |
 
 Commands that do not control motors do not disable torque from another process.
 
